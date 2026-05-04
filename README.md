@@ -1,5 +1,9 @@
 https://youtu.be/E0NYT9d_Kso
 
+Admin Logins: 
+Username: Motau or Isam or Lethabo
+passwords: Motau@2026 or Isam@2026 or Lethabo@2026
+
 
 As third-year software development students at Rosebank College, Lethabo and I set out to build Pastimes, a fully functional, premium second-hand clothing marketplace. We wanted to create a platform that doesn't just look modern and sleek but actually handles real-world e-commerce logic from the ground up. To achieve this, we developed the system using a robust tech stack consisting of PHP for the backend server logic, MySQL for the database architecture, and a custom HTML and CSS frontend to ensure a responsive, contemporary user interface. We specifically aimed for a clean, glassmorphism-inspired aesthetic to elevate the "premium" feel of the second-hand fashion being sold on the site.
 
