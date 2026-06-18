@@ -18,10 +18,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $target_file = $target_dir . $file_name;
 
     if (move_uploaded_file($_FILES["item_image"]["tmp_name"], $target_file)) {
-        // Use a placeholder seller_id (e.g., 1) or $_SESSION['user_id'] if logged in
+        // Use logged-in user's ID if available, otherwise use placeholder
         $seller_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 1;
 
-        $stmt = $conn->prepare("INSERT INTO tblproduct (seller_id, item_name, brand, category, price, size, `condition`, description, image_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')");
+        // Insert as 'pending' status so admin must approve before appearing in shop
+        $stmt = $conn->prepare("INSERT INTO tblproduct (seller_id, item_name, brand, category, price, size, `condition`, description, image_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
         $stmt->bind_param("isssdssss", $seller_id, $item_name, $brand, $category, $price, $size, $condition, $description, $target_file);
         
         if ($stmt->execute()) {

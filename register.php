@@ -14,7 +14,7 @@ $checkEmail->execute();
 $result = $checkEmail->get_result();
 
 if ($result->num_rows > 0) {
-    echo "<script> alert('This email is already registered. Please login instead.'); </script>";
+    echo "<script>alert('This email is already registered. Please login instead.');</script>";
 } else {
     // Proceed with the INSERT command...
  

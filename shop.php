@@ -12,12 +12,26 @@
                 <div class="sidebar-section">
                     <h3>Category</h3>
                     <ul>
-                        <li><input type="radio" name="cat" value="all" checked> All</li>
-                        <li><input type="radio" name="cat" value="tops"> Tops</li>
-                        <li><input type="radio" name="cat" value="bottoms"> Bottoms</li>
+                        <li><input type="radio" name="category" value="all" <?php echo (!isset($_GET['category']) || $_GET['category']=='all') ? 'checked' : ''; ?>> All</li>
+                        <li><input type="radio" name="category" value="tops" <?php echo (isset($_GET['category']) && $_GET['category']=='tops') ? 'checked' : ''; ?>> Tops</li>
+                        <li><input type="radio" name="category" value="bottoms" <?php echo (isset($_GET['category']) && $_GET['category']=='bottoms') ? 'checked' : ''; ?>> Bottoms</li>
+                        <li><input type="radio" name="category" value="outerwear" <?php echo (isset($_GET['category']) && $_GET['category']=='outerwear') ? 'checked' : ''; ?>> Outerwear</li>
+                        <li><input type="radio" name="category" value="dresses" <?php echo (isset($_GET['category']) && $_GET['category']=='dresses') ? 'checked' : ''; ?>> Dresses</li>
+                        <li><input type="radio" name="category" value="shoes" <?php echo (isset($_GET['category']) && $_GET['category']=='shoes') ? 'checked' : ''; ?>> Shoes</li>
+                        <li><input type="radio" name="category" value="accessories" <?php echo (isset($_GET['category']) && $_GET['category']=='accessories') ? 'checked' : ''; ?>> Accessories</li>
                     </ul>
                 </div>
-                <button type="submit" class="btn btn-full">Filter</button>
+
+                <div class="sidebar-section">
+                    <h3>Brand</h3>
+                    <ul>
+                        <li><input type="checkbox" name="brand[]" value="burberry" <?php echo (isset($_GET['brand']) && in_array('burberry', (array)$_GET['brand'])) ? 'checked' : ''; ?>> Burberry</li>
+                        <li><input type="checkbox" name="brand[]" value="levis" <?php echo (isset($_GET['brand']) && in_array('levis', (array)$_GET['brand'])) ? 'checked' : ''; ?>> Levi's</li>
+                        <li><input type="checkbox" name="brand[]" value="reformation" <?php echo (isset($_GET['brand']) && in_array('reformation', (array)$_GET['brand'])) ? 'checked' : ''; ?>> Reformation</li>
+                        <li><input type="checkbox" name="brand[]" value="acne" <?php echo (isset($_GET['brand']) && in_array('acne', (array)$_GET['brand'])) ? 'checked' : ''; ?>> Acne Studios</li>
+                    </ul>
+                </div>
+                <button type="submit" class="btn btn-full">Filter Results</button>
             </form>
         </div>
 
@@ -41,8 +55,7 @@
                             <div class="product-price">R<?php echo number_format($row['price'], 2); ?></div>
                             <p>Size: <?php echo $row['size']; ?></p>
                             
-                            <!-- addToCart() function is defined in footer.php -->
-                            <button class="btn btn-full" onclick="addToCart()">Add to Cart</button>
+                            <a href="shop.php?add_to_cart=<?php echo $row['product_id']; ?>" class="btn btn-full">Add to Cart</a>
                         </div>
                         <?php
                     }

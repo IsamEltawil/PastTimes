@@ -6,7 +6,7 @@ include 'header.php';
 <!-- Success Message Logic -->
 <?php if (isset($_GET['upload']) && $_GET['upload'] == 'success'): ?>
     <div style="background-color: #d4edda; color: #155724; padding: 15px; border: 1px solid #c3e6cb; text-align: center; margin: 20px; border-radius: 5px; font-weight: bold;">
-        Item successfully listed on Pastimes! Check the shop section below.
+        Item submitted successfully! Your clothing will appear in the shop once our team approves it.
     </div>
 <?php endif; ?>
 
@@ -36,7 +36,8 @@ include 'header.php';
                     <div class="product-card">
                         <div class="product-img-wrapper">
                             <!-- Condition Badge based on database value -->
-                            <span class="badge"><?php echo strtoupper($row['condition']); ?></span>
+                            <?php $badgeClass = ($row['condition'] == 'Like New') ? 'badge like-new' : 'badge'; ?>
+                            <span class="<?php echo $badgeClass; ?>"><?php echo strtoupper($row['condition']); ?></span>
                             
                             <!-- Displaying the actual uploaded image -->
                             <img src="<?php echo $row['image_path']; ?>" alt="Product" style="width:100%; height:100%; object-fit:cover;">
@@ -107,13 +108,19 @@ include 'header.php';
                         ?>
                         <div class="product-card">
                             <div class="product-img-wrapper">
+                                <?php $badgeClass = ($prod['condition'] == 'Like New') ? 'badge like-new' : 'badge'; ?>
+                                <span class="<?php echo $badgeClass; ?>"><?php echo strtoupper($prod['condition']); ?></span>
                                 <img src="<?php echo $prod['image_path']; ?>" alt="Product" style="width:100%; height:100%; object-fit:cover;">
                             </div>
                             <div class="product-brand"><?php echo strtoupper($prod['brand']); ?></div>
                             <h3 class="product-title"><?php echo $prod['item_name']; ?></h3>
                             <div class="product-price">R<?php echo number_format($prod['price'], 2); ?></div>
                             <p>Size: <?php echo $prod['size']; ?></p>
-                            <a href="index.php?add_to_cart=<?php echo $prod['product_id']; ?>" class="btn btn-full" style="display:block; text-align:center;">Add to Cart</a>
+                               <form method="GET" action="messages.php" style="margin-top:8px;">
+                                   <input type="hidden" name="product_id" value="<?php echo $prod['product_id']; ?>">
+                               </form>
+                            <a href="#" onclick="addToCart(<?php echo $prod['product_id']; ?>); return false;" class="btn btn-full" style="display:block; text-align:center;">Add to Cart</a>
+                            <a href="messages.php?product_id=<?php echo $prod['product_id']; ?>" class="btn btn-outline" style="display:block; text-align:center; margin-top:6px;">Contact Seller</a>
                         </div>
                         <?php
                     }
@@ -243,48 +250,75 @@ include 'header.php';
     <?php else: ?>
         <!-- Show this if items are in the cart -->
         <div class="cart-items">
-            <?php
-            $total = 0;
-            // Turn the session array into a comma-separated list of IDs (e.g., "1,4,7")
-            $ids_in_cart = implode(',', $_SESSION['cart']);
-            
-            // Fetch only the products that are in the cart
-            $cart_sql = "SELECT * FROM tblproduct WHERE product_id IN ($ids_in_cart)";
-            $cart_result = $conn->query($cart_sql);
-
-            if ($cart_result && $cart_result->num_rows > 0) {
-                echo "<table style='width:100%; border-collapse: collapse; margin-bottom: 20px;'>";
-                echo "<tr style='background-color: black; color: white; text-align: left;'>
-                        <th style='padding:10px;'>Item Details</th>
-                        <th style='padding:10px; text-align: right;'>Price</th>
-                      </tr>";
-                      
-                while($cart_item = $cart_result->fetch_assoc()) {
-                    $total += $cart_item['price'];
-                    echo "<tr>";
-                    echo "<td style='padding:15px; border-bottom: 1px solid #ccc;'>
-                            <b>" . strtoupper($cart_item['brand']) . "</b> - " . $cart_item['item_name'] . "<br>
-                            <small>Size: " . $cart_item['size'] . " | Condition: " . $cart_item['condition'] . "</small>
-                          </td>";
-                    echo "<td style='padding:15px; border-bottom: 1px solid #ccc; text-align:right; font-weight:bold; color: green;'>
-                            R" . number_format($cart_item['price'], 2) . "
-                          </td>";
-                    echo "</tr>";
-                }
+            <form action="checkout.php" method="POST">
+                <?php
+                $total = 0;
+                // Get product IDs from cart keys
+                $product_ids = array_keys($_SESSION['cart']);
+                $ids_in_cart = implode(',', $product_ids);
                 
-                echo "<tr>
-                        <td style='padding:15px; font-weight:bold; text-align:right; font-size: 18px;'>Total Amount:</td>
-                        <td style='padding:15px; font-weight:bold; text-align:right; font-size: 18px; color: green;'>
-                            R" . number_format($total, 2) . "
-                        </td>
-                      </tr>";
-                echo "</table>";
-            }
-            ?>
-            <div style="text-align: right;">
-                <a href="index.php?clear_cart=1" class="btn btn-outline" style="color:red; border-color:red;">Empty Cart</a>
-                <a href="checkout.php" class="btn" style="background-color: green; border-color: darkgreen;">Proceed to Checkout</a>
-            </div>
+                // Fetch only the products that are in the cart
+                $cart_sql = "SELECT * FROM tblproduct WHERE product_id IN ($ids_in_cart)";
+                $cart_result = $conn->query($cart_sql);
+
+                if ($cart_result && $cart_result->num_rows > 0) {
+                    echo "<table style='width:100%; border-collapse: collapse; margin-bottom: 20px;'>";
+                    echo "<tr style='background-color: black; color: white; text-align: left;'>
+                            <th style='padding:10px; text-align:center;'><input type='checkbox' id='select-all' checked onchange='toggleSelectAll(this)'></th>
+                            <th style='padding:10px;'>Item Details</th>
+                            <th style='padding:10px; text-align:center;'>Quantity</th>
+                            <th style='padding:10px; text-align: right;'>Price</th>
+                            <th style='padding:10px; text-align:center;'>Actions</th>
+                          </tr>";
+                          
+                    while($cart_item = $cart_result->fetch_assoc()) {
+                        $item_qty = $_SESSION['cart'][$cart_item['product_id']];
+                        $item_total = $cart_item['price'] * $item_qty;
+                        $total += $item_total;
+                        
+                        echo "<tr>";
+                        echo "<td style='padding:15px; border-bottom: 1px solid #ccc; text-align:center;'>
+                                <input type='checkbox' name='selected_items[]' value='" . $cart_item['product_id'] . "' checked>
+                              </td>";
+                        echo "<td style='padding:15px; border-bottom: 1px solid #ccc;'>
+                                <b>" . strtoupper($cart_item['brand']) . "</b> - " . $cart_item['item_name'] . "<br>
+                                <small>Size: " . $cart_item['size'] . " | Condition: " . $cart_item['condition'] . "</small>
+                              </td>";
+                        echo "<td style='padding:15px; border-bottom: 1px solid #ccc; text-align:center;'>
+                                <form action='index.php' method='POST' style='display:inline;'>
+                                    <input type='hidden' name='update_quantity' value='1'>
+                                    <input type='hidden' name='product_id' value='" . $cart_item['product_id'] . "'>
+                                    <input type='number' name='quantity' value='" . $item_qty . "' min='1' max='99' style='width:50px; text-align:center;'>
+                                    <button type='submit' style='padding:3px 8px; font-size:12px; cursor:pointer;'>Update</button>
+                                </form>
+                              </td>";
+                        echo "<td style='padding:15px; border-bottom: 1px solid #ccc; text-align:right; font-weight:bold; color: green;'>
+                                R" . number_format($item_total, 2) . "
+                              </td>";
+                        echo "<td style='padding:15px; border-bottom: 1px solid #ccc; text-align:center;'>
+                                <a href='index.php?remove_from_cart=" . $cart_item['product_id'] . "' class='btn btn-outline' style='padding:3px 8px; font-size:12px; color:red; border-color:red;' onclick=\"return confirm('Remove this item?');\">Remove</a>
+                              </td>";
+                        echo "</tr>";
+                    }
+                    
+                    echo "<tr>
+                            <td colspan='3' style='padding:15px; font-weight:bold; text-align:right; font-size: 18px;'>Total Amount:</td>
+                            <td style='padding:15px; font-weight:bold; text-align:right; font-size: 18px; color: green;'>
+                                R" . number_format($total, 2) . "
+                            </td>
+                            <td></td>
+                          </tr>";
+                    echo "</table>";
+                }
+                ?>
+                <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; align-items:center;">
+                    <a href="#shop" class="btn btn-outline" style="border-color: black; color:black;">Continue Shopping</a>
+                    <div>
+                        <a href="index.php?clear_cart=1" class="btn btn-outline" style="color:red; border-color:red;">Empty Cart</a>
+                        <button type="submit" class="btn" style="background-color: green; border-color: darkgreen;">Proceed to Checkout</button>
+                    </div>
+                </div>
+            </form>
         </div>
     <?php endif; ?>
 </main>

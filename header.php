@@ -6,33 +6,63 @@ include_once 'config.php';
 // CART LOGIC
 // ==========================================
 // 1. Create an empty cart if one doesn't exist
+// Cart now stores: ['product_id' => quantity, ...]
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = array(); 
 }
 
-// 2. Add an item to the cart
+// 2. Add an item to the cart (or increase quantity)
 if (isset($_GET['add_to_cart'])) {
-    $product_id = $_GET['add_to_cart'];
+    $product_id = intval($_GET['add_to_cart']);
     
-    // Only add it if it's not already in the cart
-    if (!in_array($product_id, $_SESSION['cart'])) {
-        $_SESSION['cart'][] = $product_id;
+    // If already in cart, increase quantity; otherwise set to 1
+    if (isset($_SESSION['cart'][$product_id])) {
+        $_SESSION['cart'][$product_id]++;
+    } else {
+        $_SESSION['cart'][$product_id] = 1;
     }
     
-    // Redirect back to the shop to prevent refresh bugs
-    header("Location: index.php?cart_added=1#shop");
+    // Redirect back to the referring page when possible, otherwise fallback to the homepage shop section
+    $redirect = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'index.php?cart_added=1#shop';
+    header("Location: $redirect");
     exit();
 }
 
-// 3. Clear the cart
+// 3. Remove a single item from cart
+if (isset($_GET['remove_from_cart'])) {
+    $product_id = intval($_GET['remove_from_cart']);
+    unset($_SESSION['cart'][$product_id]);
+    header("Location: index.php#cart");
+    exit();
+}
+
+// 4. Update quantity for a specific item
+if (isset($_POST['update_quantity'])) {
+    $product_id = intval($_POST['product_id']);
+    $quantity = intval($_POST['quantity']);
+    
+    if ($quantity > 0) {
+        $_SESSION['cart'][$product_id] = $quantity;
+    } else {
+        unset($_SESSION['cart'][$product_id]);
+    }
+    
+    header("Location: index.php#cart");
+    exit();
+}
+
+// 5. Clear the cart
 if (isset($_GET['clear_cart'])) {
     $_SESSION['cart'] = array();
     header("Location: index.php#cart");
     exit();
 }
 
-// Count items for the navigation bar
-$cart_count = count($_SESSION['cart']);
+// Count total items for the navigation bar (sum of quantities)
+$cart_count = 0;
+foreach ($_SESSION['cart'] as $qty) {
+    $cart_count += $qty;
+}
 // ==========================================
 ?>
 
@@ -184,6 +214,12 @@ $cart_count = count($_SESSION['cart']);
             line-height: 1;
             border: 1px solid black;
         }
+        /* Special styling for Like New items to encourage trust */
+        .badge.like-new {
+            background-color: #28a745; /* green */
+            color: white;
+            border-color: darkgreen;
+        }
 
         .product-brand {
             font-size: 12px;
@@ -304,6 +340,7 @@ $cart_count = count($_SESSION['cart']);
             }
         }
     </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="global-header">
@@ -320,6 +357,7 @@ $cart_count = count($_SESSION['cart']);
         <li style="color: #00FF00; font-weight: bold;">
             Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>
         </li>
+        <li><a href="messages.php" style="color: #90EE90;">📬 Messages</a></li>
         <li><a href="logout.php" style="color: red;">Logout</a></li>
     <?php else: ?>
         <!-- This shows if no one is logged in -->

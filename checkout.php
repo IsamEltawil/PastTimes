@@ -3,6 +3,15 @@ include_once 'config.php';
 include 'header.php'; 
 
 // 1. Security Checks
+$selected_items = array();
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['selected_items'])) {
+    $selected_items = array_map('intval', $_POST['selected_items']);
+    if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+        // Keep only selected items that exist in cart
+        $selected_items = array_intersect($selected_items, array_keys($_SESSION['cart']));
+    }
+}
+
 if (empty($_SESSION['cart'])) {
     echo "<script>window.location='index.php#cart';</script>";
     exit();
@@ -12,6 +21,13 @@ if (!isset($_SESSION['user_id'])) {
     echo "<script>alert('Please login to your account to checkout!'); window.location='index.php#login';</script>";
     exit();
 }
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($selected_items)) {
+    echo "<script>alert('Please select items from your cart to checkout.'); window.location='index.php#cart';</script>";
+    exit();
+}
+
+$checkout_items = !empty($selected_items) ? $selected_items : array_keys($_SESSION['cart']);
 ?>
 
 <main class="container">
@@ -23,23 +39,32 @@ if (!isset($_SESSION['user_id'])) {
         <div style="background-color: #fff; padding: 15px; border: 1px solid #ccc; margin-bottom: 20px;">
             <?php
             $total = 0;
-            $ids_in_cart = implode(',', $_SESSION['cart']);
+            $ids_in_cart = implode(',', $checkout_items);
             $cart_sql = "SELECT * FROM tblproduct WHERE product_id IN ($ids_in_cart)";
             $cart_result = $conn->query($cart_sql);
 
             if ($cart_result && $cart_result->num_rows > 0) {
                 while($item = $cart_result->fetch_assoc()) {
-                    $total += $item['price'];
-                    echo "<p><b>" . strtoupper($item['brand']) . "</b> - " . $item['item_name'] . " <span style='float:right; color:green; font-weight:bold;'>R" . number_format($item['price'], 2) . "</span></p>";
+                    $item_qty = $_SESSION['cart'][$item['product_id']];
+                    $item_total = $item['price'] * $item_qty;
+                    $total += $item_total;
+                    echo "<p><b>" . strtoupper($item['brand']) . "</b> - " . $item['item_name'] . " (Qty: " . $item_qty . ") <span style='float:right; color:green; font-weight:bold;'>R" . number_format($item_total, 2) . "</span></p>";
                 }
                 echo "<hr>";
-                echo "<h4>Total Amount to Pay: <span style='float:right; color:green;'>R" . number_format($total, 2) . "</span></h4>";
+                $buyer_fee = defined('BUYER_PROTECTION_FEE') ? BUYER_PROTECTION_FEE : 0.0;
+                $final_total = $total + $buyer_fee;
+                echo "<p><b>Buyer Protection Fee:</b> <span style='float:right; color:green;'>R" . number_format($buyer_fee, 2) . "</span></p>";
+                echo "<h4>Total Amount to Pay: <span style='float:right; color:green;'>R" . number_format($final_total, 2) . "</span></h4>";
             }
             ?>
         </div>
 
         <!-- The Confirmation Form -->
         <form action="process_checkout.php" method="POST">
+            <?php foreach ($checkout_items as $item_id): ?>
+                <input type="hidden" name="selected_items[]" value="<?php echo intval($item_id); ?>">
+            <?php endforeach; ?>
+            <input type="hidden" name="buyer_protection_fee" value="<?php echo number_format(defined('BUYER_PROTECTION_FEE') ? BUYER_PROTECTION_FEE : 0, 2, '.', ''); ?>">
             <!-- Even though we don't save the address in the DB right now, adding this makes it feel like a real checkout! -->
             <div class="form-group">
                 <label>Shipping Address (For delivery):</label>

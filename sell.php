@@ -54,7 +54,7 @@
                         <label>Description:</label>
                         <textarea name="description" rows="5" class="form-control" required></textarea>
 </div>
-            <button type="submit" class="btn btn-full" style="background-color: green; border-color: darkgreen;">Submit Item</button>
+            <button type="submit" class="btn btn-full" style="background-color: green; border-color: darkgreen;">Submit Item for Approval</button>
         </form>
     </div>
 </main>

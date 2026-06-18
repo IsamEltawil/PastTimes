@@ -32,16 +32,31 @@
          ======================================================= -->
     <script>
         /**
-         * Updates the cart counter in the header
+         * Adds an item to the cart via AJAX and updates header counts
          */
-        function addToCart() {
-            let cartLink = document.getElementById('cart-link');
-            if (cartLink) {
-                // Extracts the number inside the parentheses, e.g., "Cart (0)" -> 0
-                let currentCount = parseInt(cartLink.innerText.match(/\d+/)[0]);
-                cartLink.innerText = `Cart (${currentCount + 1})`;
-                alert("Item added to your Pastimes cart!");
-            }
+        function addToCart(productId) {
+            fetch('ajax_cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `action=add&product_id=${encodeURIComponent(productId)}`
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    let cartLink = document.getElementById('cart-link');
+                    if (cartLink) cartLink.innerText = `Cart (${data.cart_count})`;
+                    alert('Item added to your Pastimes cart!');
+                }
+            }).catch(err => {
+                console.error('Cart AJAX error', err);
+            });
+        }
+
+        function toggleSelectAll(source) {
+            let checkboxes = document.querySelectorAll('input[name="selected_items[]"]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = source.checked;
+            });
         }
 
         /**

@@ -5,7 +5,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Hardcoded Admin Verification only Motau, Lethabo and Isam have access to admin responsibilities
+    // Hardcoded Admin Verification
     if (($username === 'Isam' && $password === 'Isam@2026') || 
         ($username === 'Motau' && $password === 'Motau@2026') 
         || 
